@@ -1,18 +1,30 @@
 #include <Adafruit_NeoPixel.h>
+#include <math.h>
 
 #define PIN_LED 6
 #define PIN_ACC_X 0
 #define PIN_ACC_Y 1
 #define PIN_ACC_Z 2
-#define NUMPIXELS 60
+#define PIN_VOL 3
+#define NUMPIXELS 104
+
+#define INIT_COUNT 10
+int init_x;
+int init_y;
+int init_z;
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
 
-int delayval = 100;
+int delayval = 10;
+int ledint = 255;
+int ledsat = 250;
 
 void setup() {
   Serial.begin(9600);
   pixels.begin(); // This initializes the NeoPixel library.
+
+  // 加速度センサーの初期値を設定
+  getInitAccCensorVal();
 }
 
 void loop() {
@@ -21,15 +33,18 @@ void loop() {
   long accy = 0;
   long accz = 0;
   for (int i = 0; i < NUMPIXELS; i++) {
+    // ボリュームの値を取得
+    ledint = analogRead(PIN_VOL) / 4;
+    // 加速度センサの値を取得
     accx = analogRead(PIN_ACC_X);
     accy = analogRead(PIN_ACC_Y);
     accz = analogRead(PIN_ACC_Z);
-    Serial.print("X:");
-    Serial.print(accx);
-    Serial.print("  Y:");
-    Serial.print(accy);
-    Serial.print("  Z:");
-    Serial.println(accz);
+    //    Serial.print("X:");
+    //    Serial.print(accx - init_x);
+    //    Serial.print("  Y:");
+    //    Serial.print(accy - init_y);
+    //    Serial.print("  Z:");
+    //    Serial.println(accz - init_z);
     //    pixels.setPixelColor(i, pixels.Color(0, 255, 0)); // green color. 
 
     //    // shift 5 leds
@@ -41,11 +56,41 @@ void loop() {
     //      pixels.setPixelColor(NUMPIXELS - len + i, pixels.Color(0, 0, 0));
     //    }
 
+    pixels.setPixelColor(i, HSItoRGB(getLean360(accy - init_y, accx - init_x), ledsat, ledint));
+    Serial.println(getLean360(accy - init_y, accx - init_x));
+
     // hue cycle
-    pixels.setPixelColor(i, HSItoRGB((i * 20)%360, 250, 250));
+    //    pixels.setPixelColor(i, HSItoRGB((i * 20)%360, 250, 50));
     pixels.show(); // This sends the updated pixel color to the hardware.
     delay(delayval); // Delay for a period of time (in milliseconds).
   }
+}
+
+void getInitAccCensorVal() {
+  float sum_x = 0.0f;
+  float sum_y = 0.0f;
+  float sum_z = 0.0f;
+  for (int i = 0; i < INIT_COUNT; i++) {
+    sum_x += analogRead(PIN_ACC_X);
+    sum_y += analogRead(PIN_ACC_Y);
+    sum_z += analogRead(PIN_ACC_Z);
+  }
+  init_x = (int)(sum_x/INIT_COUNT);
+  init_y = (int)(sum_y/INIT_COUNT);
+  init_z = (int)(sum_z/INIT_COUNT);
+}
+
+int getLean360(int x, int y) {
+  int res = 0;
+
+  double rad = atan2((double)y, (double)x);
+  res = (int)(rad * 360.0 / (2 * M_PI));
+
+  if (res < 0) {
+    res += 360;
+  }
+
+  return res;
 }
 
 uint32_t HSItoRGB(int hue, int saturation, int intensity) {
@@ -87,5 +132,7 @@ uint32_t HSItoRGB(int hue, int saturation, int intensity) {
   }
   return pixels.Color(r, g, b);
 }
+
+
 
 
