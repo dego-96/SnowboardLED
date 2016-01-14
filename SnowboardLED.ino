@@ -19,14 +19,20 @@ int delayval = 10;
 int ledint = 255;
 int ledsat = 250;
 
+/*****************************************************************
+/* setup                                                        */
+/****************************************************************/
 void setup() {
   Serial.begin(9600);
   pixels.begin(); // This initializes the NeoPixel library.
 
   // 加速度センサーの初期値を設定
-  getInitAccCensorVal();
+  getInitAccSensorVal();
 }
 
+/*****************************************************************
+/* loop                                                         */
+/****************************************************************/
 void loop() {
   int len = 5; // 同時点灯するLEDの個数
   long accx = 0;
@@ -51,7 +57,12 @@ void loop() {
   }
 }
 
-void getInitAccCensorVal() {
+/*****************************************************************
+/* getInitAccSensorVal                                          */
+/*                                                              */
+/*   加速度センサーの基準値を設定する                           */
+/****************************************************************/
+void getInitAccSensorVal() {
   float sum_x = 0.0f;
   float sum_y = 0.0f;
   float sum_z = 0.0f;
@@ -65,6 +76,13 @@ void getInitAccCensorVal() {
   init_z = (int)(sum_z/INIT_COUNT);
 }
 
+/*****************************************************************
+/* getLean360                                                   */
+/*   int x : X座標                                              */
+/*   int y : Y座標                                              */
+/*                                                              */
+/*   x, y座標から360度の向きに変換する                          */
+/****************************************************************/
 int getLean360(int x, int y) {
   int res = 0;
 
@@ -78,6 +96,14 @@ int getLean360(int x, int y) {
   return res;
 }
 
+/*****************************************************************
+/* HSItoRGB                                                     */
+/*   int hue        : 色相                                      */
+/*   int saturation : 彩度                                      */
+/*   int intensity  : 明度                                      */
+/*                                                              */
+/*   HSI表色系からRGB表色系に変換する                           */
+/****************************************************************/
 uint32_t HSItoRGB(int hue, int saturation, int intensity) {
   uint8_t r, g, b;
   if (0 <= hue && hue < 60) {
@@ -118,13 +144,21 @@ uint32_t HSItoRGB(int hue, int saturation, int intensity) {
   return pixels.Color(r, g, b);
 }
 
+/*****************************************************************
+/* print_acc                                                    */
+/*   long x : X方向の加速度                                     */
+/*   long y : Y方向の加速度                                     */
+/*   long z : Z方向の加速度                                     */
+/*                                                              */
+/*   加速度センサーの値を表示する                               */
+/****************************************************************/
 void print_acc(long x, long y, long z) {
     Serial.print("ACC Val: (");
-    Serial.print(accx);
+    Serial.print(x);
     Serial.print(", ");
-    Serial.print(accy);
+    Serial.print(y);
     Serial.print(", ");
-    Serial.print(accz);
+    Serial.print(z);
     Serial.println(")");
 }
 
