@@ -39,22 +39,7 @@ void loop() {
     accx = analogRead(PIN_ACC_X);
     accy = analogRead(PIN_ACC_Y);
     accz = analogRead(PIN_ACC_Z);
-    //    Serial.print("X:");
-    //    Serial.print(accx - init_x);
-    //    Serial.print("  Y:");
-    //    Serial.print(accy - init_y);
-    //    Serial.print("  Z:");
-    //    Serial.println(accz - init_z);
-    //    pixels.setPixelColor(i, pixels.Color(0, 255, 0)); // green color. 
-
-    //    // shift 5 leds
-    //    pixels.setPixelColor(i, pixels.Color(255*accx/1024, 255*accy/1024, 255*accz/1024));
-    //    if (i - len > -1 || NUMPIXELS - len + i) {
-    //      pixels.setPixelColor(i - len, pixels.Color(0, 0, 0));
-    //    }
-    //    if (len > i) {
-    //      pixels.setPixelColor(NUMPIXELS - len + i, pixels.Color(0, 0, 0));
-    //    }
+    print_acc(accx, accy, accz); // 加速度センサの値をシリアルポートに出力
 
     pixels.setPixelColor(i, HSItoRGB(getLean360(accy - init_y, accx - init_x), ledsat, ledint));
     Serial.println(getLean360(accy - init_y, accx - init_x));
@@ -133,6 +118,13 @@ uint32_t HSItoRGB(int hue, int saturation, int intensity) {
   return pixels.Color(r, g, b);
 }
 
-
-
+void print_acc(long x, long y, long z) {
+    Serial.print("ACC Val: (");
+    Serial.print(accx);
+    Serial.print(", ");
+    Serial.print(accy);
+    Serial.print(", ");
+    Serial.print(accz);
+    Serial.println(")");
+}
 
