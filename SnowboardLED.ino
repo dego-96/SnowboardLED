@@ -34,27 +34,62 @@ void setup() {
 /* loop                                                         */
 /****************************************************************/
 void loop() {
-  int len = 5; // 同時点灯するLEDの個数
+  // ボリュームの値を取得
+  ledint = analogRead(PIN_VOL) / 4;
+
+  // 加速度センサの値を取得
   long accx = 0;
   long accy = 0;
   long accz = 0;
-  for (int i = 0; i < NUMPIXELS; i++) {
-    // ボリュームの値を取得
-    ledint = analogRead(PIN_VOL) / 4;
-    // 加速度センサの値を取得
-    accx = analogRead(PIN_ACC_X);
-    accy = analogRead(PIN_ACC_Y);
-    accz = analogRead(PIN_ACC_Z);
-    print_acc(accx, accy, accz); // 加速度センサの値をシリアルポートに出力
+  accx = analogRead(PIN_ACC_X);
+  accy = analogRead(PIN_ACC_Y);
+  accz = analogRead(PIN_ACC_Z);
+  print_acc(accx, accy, accz); // 加速度センサの値をシリアルポートに出力
 
-    pixels.setPixelColor(i, HSItoRGB(getLean360(accy - init_y, accx - init_x), ledsat, ledint));
-    Serial.println(getLean360(accy - init_y, accx - init_x));
+  /***********************************************/
+  /* (255, 255, 255) : white                     */
+  /* (255, 255, 0)   : yellow                    */
+  /* (0, 255, 255)   : cyan                      */
+  /* (0, 255, 0)     : green                     */
+  /* (0, 0, 255)     : blue                      */
+  /*                                             */
+  /*             cyan                            */
+  /*              ↑                             */
+  /*   green ← white  → yellow                 */
+  /*              ↓                             */
+  /*             blue                            */
+  /*                                             */
+  /***********************************************/
 
-    // hue cycle
-    //    pixels.setPixelColor(i, HSItoRGB((i * 20)%360, 250, 50));
-    pixels.show(); // This sends the updated pixel color to the hardware.
-    delay(delayval); // Delay for a period of time (in milliseconds).
+  // 必要な変数を宣言
+  long dx = accx - init_x;
+  long dy = accy - init_y;
+  uint8_t r, g, b;
+
+  // 傾きに応じて色を設定
+  r = ledint;
+  if (dx > 0) {
+    b = ledint - dx > 0 ? ledint - dx : 0;
   }
+  else {
+    b = ledint + dx > 0 ? ledint + dx : 0;
+    r = ledint + dx > 0 ? ledint + dx : 0;
+  }
+  if (dy > 0) {
+    g = ledint - dy > 0 ? ledint - dy : 0;
+  }
+  else {
+    g = ledint + dy > 0 ? ledint + dy : 0;
+    r = ledint + dy > 0 ? ledint + dy : 0;
+  }
+
+  // LEDに色情報を設定
+  for (int i = 0; i < NUMPIXELS; i++) {
+    //    pixels.setPixelColor(i, HSItoRGB(getLean360(accy - init_y, accx - init_x), ledsat, ledint));
+    pixels.setPixelColor(i, pixels.Color(r, g, b));
+  }
+  pixels.show(); // This sends the updated pixel color to the hardware.
+  delay(delayval); // Delay for a period of time (in milliseconds).
 }
 
 /*****************************************************************
@@ -153,12 +188,13 @@ uint32_t HSItoRGB(int hue, int saturation, int intensity) {
 /*   加速度センサーの値を表示する                               */
 /****************************************************************/
 void print_acc(long x, long y, long z) {
-    Serial.print("ACC Val: (");
-    Serial.print(x);
-    Serial.print(", ");
-    Serial.print(y);
-    Serial.print(", ");
-    Serial.print(z);
-    Serial.println(")");
+  Serial.print("ACC Val: (");
+  Serial.print(x);
+  Serial.print(", ");
+  Serial.print(y);
+  Serial.print(", ");
+  Serial.print(z);
+  Serial.println(")");
 }
+
 
