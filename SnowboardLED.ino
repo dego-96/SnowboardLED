@@ -8,14 +8,14 @@
 #define PIN_VOL 3
 #define NUMPIXELS 104
 
-#define INIT_COUNT 10
+#define INIT_COUNT 1
 int init_x;
 int init_y;
 int init_z;
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
 
-int delayval = 10;
+int delayval = 1;
 int ledint = 255;
 int ledsat = 250;
 
@@ -34,62 +34,73 @@ void setup() {
 /* loop                                                         */
 /****************************************************************/
 void loop() {
-  // ボリュームの値を取得
-  ledint = analogRead(PIN_VOL) / 4;
-
-  // 加速度センサの値を取得
   long accx = 0;
   long accy = 0;
   long accz = 0;
-  accx = analogRead(PIN_ACC_X);
-  accy = analogRead(PIN_ACC_Y);
-  accz = analogRead(PIN_ACC_Z);
-  print_acc(accx, accy, accz); // 加速度センサの値をシリアルポートに出力
-
-  /***********************************************/
-  /* (255, 255, 255) : white                     */
-  /* (255, 255, 0)   : yellow                    */
-  /* (0, 255, 255)   : cyan                      */
-  /* (0, 255, 0)     : green                     */
-  /* (0, 0, 255)     : blue                      */
-  /*                                             */
-  /*             cyan                            */
-  /*              ↑                             */
-  /*   green ← white  → yellow                 */
-  /*              ↓                             */
-  /*             blue                            */
-  /*                                             */
-  /***********************************************/
-
-  // 必要な変数を宣言
-  long dx = accx - init_x;
-  long dy = accy - init_y;
+  long dx;
+  long dy;
   uint8_t r, g, b;
 
-  // 傾きに応じて色を設定
-  r = ledint;
-  if (dx > 0) {
-    b = ledint - dx > 0 ? ledint - dx : 0;
-  }
-  else {
-    b = ledint + dx > 0 ? ledint + dx : 0;
-    r = ledint + dx > 0 ? ledint + dx : 0;
-  }
-  if (dy > 0) {
-    g = ledint - dy > 0 ? ledint - dy : 0;
-  }
-  else {
-    g = ledint + dy > 0 ? ledint + dy : 0;
-    r = ledint + dy > 0 ? ledint + dy : 0;
-  }
-
-  // LEDに色情報を設定
   for (int i = 0; i < NUMPIXELS; i++) {
-    //    pixels.setPixelColor(i, HSItoRGB(getLean360(accy - init_y, accx - init_x), ledsat, ledint));
-    pixels.setPixelColor(i, pixels.Color(r, g, b));
+    // ボリュームの値を取得
+    ledint = analogRead(PIN_VOL) / 4;
+
+    // 加速度センサの値を取得
+    accx = analogRead(PIN_ACC_X);
+    accy = analogRead(PIN_ACC_Y);
+    accz = analogRead(PIN_ACC_Z);
+    //  print_acc(accx, accy, accz); // 加速度センサの値をシリアルポートに出力
+
+    /***********************************************/
+    /* (255, 255, 255) : white                     */
+    /* (255, 255, 0)   : yellow                    */
+    /* (0, 255, 255)   : cyan                      */
+    /* (0, 255, 0)     : green                     */
+    /* (0, 0, 255)     : blue                      */
+    /*                                             */
+    /*            green                            */
+    /*              ↑                             */
+    /*   cyan  ← white  → yellow                 */
+    /*              ↓                             */
+    /*             blue                            */
+    /*                                             */
+    /***********************************************/
+
+    // 必要な変数を宣言
+    dx = accx - init_x;
+    dy = accy - init_y;
+
+    r = ledint;
+    g = ledint;
+    b = ledint;
+
+    // 傾きに応じて色を設定
+    if (dx > 0) {
+      g = ledint - dx;
+    }
+    else {
+      b = ledint + dx;
+    }
+    if (dy > 0) {
+      b = ledint - dy;
+      r = ledint - dy;
+    }
+    else {
+      g = ledint + dy;
+      r = ledint + dy;
+    }
+    // 上下限処理
+    r = (r > 255) ? 255 : ((r < 0) ? 0 : r);
+    g = (g > 255) ? 255 : ((g < 0) ? 0 : g);
+    b = (b > 255) ? 255 : ((b < 0) ? 0 : b);
+
+    print_acc(r, g, b); // for debug
+
+    // LEDに色情報を設定
+    pixels.setPixelColor(i, (((uint32_t)r << 16) | ((uint32_t)g << 8) | b));
+    pixels.show(); // This sends the updated pixel color to the hardware.
+    delay(delayval); // Delay for a period of time (in milliseconds).
   }
-  pixels.show(); // This sends the updated pixel color to the hardware.
-  delay(delayval); // Delay for a period of time (in milliseconds).
 }
 
 /*****************************************************************
@@ -196,5 +207,7 @@ void print_acc(long x, long y, long z) {
   Serial.print(z);
   Serial.println(")");
 }
+
+
 
 
